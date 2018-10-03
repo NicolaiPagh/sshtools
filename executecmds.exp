@@ -74,13 +74,13 @@ expect_user -re "(.*)\n" {set pass $expect_out(1,string)}
 stty echo
 
 foreach host [split $hosts "\n"] {
+    log_file
     log_file -noappend ./logs/$host.log
     set result [sshConnect $user $pass $host]
     if { $result ne "0" } {
         set result [telnetConnect $user $pass $host]
         if { $result ne "0" } {
             puts "Both SSH and Telnet login failed, maybe host is down?"
-            exit
         }
     }
 
