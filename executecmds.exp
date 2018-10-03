@@ -33,21 +33,8 @@ proc sshConnect {user pass host} {
                         default {
                                 send_user "SSH login failed for unknown reasons\n"
                                 return 1
-                                }
                         }
-}
-                                send "$pass\r"
-                                exp_continue
-                        }
-                        "$prompt" {
-                                return 0
-                                send_user "Succesfully connected to device via SSH\n"
-                        }
-                        default {
-                                send_user "SSH login failed for unknown reasons\n"
-                                return 1
-                                }
-                        }
+                }
 }
 proc telnetConnect {user pass host} {
         global prompt
@@ -96,9 +83,6 @@ foreach host [split $hosts "\n"] {
             exit
         }
     }
-    #cisco seems to eat our first command, so we send some random text first
-    send -- "bogus text\r"
-    expect -re "$prompt"
 
     #below runs the actually commands from cmdlist on the device
     foreach cmd [split $cmds "\n"] {
