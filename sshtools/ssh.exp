@@ -1,0 +1,19 @@
+#!/usr/bin/expect
+
+set timeout 10
+
+lassign $argv host
+
+#make sure user and password is written in file ./up seperated by newline, with user on first line and password on the second.
+
+set up [open ./up]
+gets $up user
+gets $up password
+
+spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user@$host
+expect {
+	"assword:" { send -- "$password\r"
+	}
+}
+
+interact

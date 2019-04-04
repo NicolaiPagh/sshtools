@@ -1,0 +1,93 @@
+#!/usr/bin/expect
+
+global prompt
+set timeout 10
+set prompt "#"
+set result 3
+
+set hostlist [open ./hosts r]
+set hosts [read -nonewline $hostlist]
+close $hostlist
+
+set cmdlist [open ./cmds r]
+set cmds [read -nonewline $cmdlist]
+close $cmdlist
+
+proc sshConnect {user pass host} {
+        global prompt
+        global spawn_id
+        spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user@$host
+                expect {
+                        "Connection refused" {
+                                send_user "SSH Connection refused. SSH most likely not enabled on the device\n"
+                                return 1
+                        }
+                        "assword:" {
+                                send "$pass\r"
+                                exp_continue
+                        }
+                        "$prompt" {
+                                return 0
+                                send_user "Succesfully connected to device via SSH\n"
+                        }
+                        default {
+                                send_user "SSH login failed for unknown reasons\n"
+                                return 1
+                        }
+                }
+}
+proc telnetConnect {user pass host} {
+        global prompt
+        global spawn_id
+        spawn telnet $host
+                expect {
+                        "Connection refused" {
+                                send_user "Telnet Connection refused. telnet most likely not enabled on the device\n"
+                                return 1
+            }
+                        "sername:" {
+                                send "$user\r"
+                                exp_continue
+                        }
+                        "assword:" {
+                                send "$pass\r"
+                                exp_continue
+                        }
+                        "$prompt" {
+                                send_user "Successfully connected to device via telnet\n"
+                                return 0
+                        }
+                        default {
+                                send_user "Telnet login failed for unknown reasons\n"
+                                return 1
+                        }
+                }
+}
+
+#grab login details from user running script
+stty echo
+send_user "\nUser for SSH connection: "
+expect_user -re "(.*)\n" {set user $expect_out(1,string)}
+send_user "\nPassword for SSH user: "
+stty -echo
+expect_user -re "(.*)\n" {set pass $expect_out(1,string)}
+stty echo
+
+foreach host [split $hosts "\n"] {
+	log_file
+    log_file -noappend ./logs/$host.log
+    set result [sshConnect $user $pass $host]
+    if { $result ne "0" } {
+        set result [telnetConnect $user $pass $host]
+        if { $result ne "0" } {
+            puts "Both SSH and Telnet login failed, maybe host is down?"
+        }
+    }
+
+    #below runs the actually commands from cmdlist on the device
+    foreach cmd [split $cmds "\n"] {
+        send -- "$cmd\r"
+        expect -re "$prompt"
+    }
+send -- "exit\r"
+}
