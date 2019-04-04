@@ -5,11 +5,19 @@ set timeout 10
 set prompt "#"
 set result 3
 
-set hostlist [open ./hosts r]
+proc getScriptDirectory {} {
+    set dispScriptFile [file normalize [info script]]
+    set scriptFolder [file dirname $dispScriptFile]
+    return $scriptFolder
+}
+
+set scriptDir [getScriptDirectory]
+
+set hostlist [open $scriptDir/hosts r]
 set hosts [read -nonewline $hostlist]
 close $hostlist
 
-set cmdlist [open ./cmds r]
+set cmdlist [open $scriptDir/cmds r]
 set cmds [read -nonewline $cmdlist]
 close $cmdlist
 

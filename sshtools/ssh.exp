@@ -4,9 +4,16 @@ set timeout 10
 
 lassign $argv host
 
-#make sure user and password is written in file ./up seperated by newline, with user on first line and password on the second.
+proc getScriptDirectory {} {
+    set dispScriptFile [file normalize [info script]]
+    set scriptFolder [file dirname $dispScriptFile]
+    return $scriptFolder
+}
 
-set up [open ./up]
+set scriptDir [getScriptDirectory]
+
+#make sure user and password is written in file ./up seperated by newline, with user on first line and password on the second.
+set up [open $scriptDir/up]
 gets $up user
 gets $up password
 

@@ -5,9 +5,17 @@ set timeout 10
 set prompt "#"
 lassign $argv host
 
+proc getScriptDirectory {} {
+    set dispScriptFile [file normalize [info script]]
+    set scriptFolder [file dirname $dispScriptFile]
+    return $scriptFolder
+}
+
+set scriptDir [getScriptDirectory]
+
 #make sure user and password is written in file ./up seperated by newline, with user on first line and password on the second.
 #gets user and password from ./up file
-set up [open ./up]
+set up [open $scriptDir/up]
 gets $up user
 gets $up password
 
@@ -24,7 +32,7 @@ proc sshConnect {user password host} {
 				send_user "SSH Connection refused. SSH most likely not enabled on the device\n"
 				return 1
 			}
-			"assword:" { 
+			"assword:" {
 				send "$password\r"
 				exp_continue
 			}
