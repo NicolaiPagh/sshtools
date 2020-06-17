@@ -21,7 +21,7 @@ set cmdlist [open $scriptDir/cmds r]
 set cmds [read -nonewline $cmdlist]
 close $cmdlist
 
-proc sshConnect {user pass host} {
+proc sshConnect {user pass host cmds} {
         global prompt
         global spawn_id
         spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user@$host
@@ -35,8 +35,13 @@ proc sshConnect {user pass host} {
                                 exp_continue
                         }
                         "$prompt" {
-                                return 0
                                 send_user "Succesfully connected to device via SSH\n"
+								foreach cmd [split $cmds "\n"] {
+                                    send -- "$cmd\r"
+                                    expect -re "$prompt"
+                                }
+                                send -- "exit\r"
+								return 0
                         }
                         default {
                                 send_user "SSH login failed for unknown reasons\n"
@@ -44,7 +49,7 @@ proc sshConnect {user pass host} {
                         }
                 }
 }
-proc telnetConnect {user pass host} {
+proc telnetConnect {user pass host cmds} {
         global prompt
         global spawn_id
         spawn telnet $host
@@ -63,6 +68,11 @@ proc telnetConnect {user pass host} {
                         }
                         "$prompt" {
                                 send_user "Successfully connected to device via telnet\n"
+								foreach cmd [split $cmds "\n"] {
+        							send -- "$cmd\r"
+        							expect -re "$prompt"
+								}
+								send -- "exit\r"
                                 return 0
                         }
                         default {
@@ -71,6 +81,14 @@ proc telnetConnect {user pass host} {
                         }
                 }
 }
+proc runCmdsList {cmds} {
+    foreach cmd [split $cmds "\n"] {
+        send -- "$cmd\r"
+        expect -re "$prompt"
+    }
+send -- "exit\r"
+}
+
 
 #grab login details from user running script
 stty echo
@@ -84,18 +102,11 @@ stty echo
 foreach host [split $hosts "\n"] {
 	log_file
     log_file -noappend ./logs/$host.log
-    set result [sshConnect $user $pass $host]
+    set result [sshConnect $user $pass $host $cmds]
     if { $result ne "0" } {
-        set result [telnetConnect $user $pass $host]
+        set result [telnetConnect $user $pass $host $cmds]
         if { $result ne "0" } {
             puts "Both SSH and Telnet login failed, maybe host is down?"
         }
     }
-
-    #below runs the actually commands from cmdlist on the device
-    foreach cmd [split $cmds "\n"] {
-        send -- "$cmd\r"
-        expect -re "$prompt"
-    }
-send -- "exit\r"
 }
