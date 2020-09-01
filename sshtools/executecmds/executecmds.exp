@@ -27,7 +27,7 @@ proc sshConnect {user pass host cmds} {
         spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $user@$host
                 expect {
                         "Connection refused" {
-                                send_user "SSH Connection refused. SSH most likely not enabled on the device\n"
+                                send_user "SSH Connection refused.\n"
                                 return 1
                         }
                         "assword:" {
@@ -55,7 +55,7 @@ proc telnetConnect {user pass host cmds} {
         spawn telnet $host
                 expect {
                         "Connection refused" {
-                                send_user "Telnet Connection refused. telnet most likely not enabled on the device\n"
+                                send_user "Telnet Connection refused.\n"
                                 return 1
             }
                         "sername:" {
@@ -67,7 +67,7 @@ proc telnetConnect {user pass host cmds} {
                                 exp_continue
                         }
                         "$prompt" {
-                                send_user "Successfully connected to device via telnet\n"
+                                send_user "Successfully connected to device via Telnet\n"
 								foreach cmd [split $cmds "\n"] {
         							send -- "$cmd\r"
         							expect -re "$prompt"
